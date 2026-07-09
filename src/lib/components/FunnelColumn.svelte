@@ -2,7 +2,11 @@
 	import type { CRMCard, FunnelStage } from '$lib/types';
 	import CardCRM from './CardCRM.svelte';
 
-	let { stage, cards } = $props<{ stage: FunnelStage; cards: CRMCard[] }>();
+	let { stage, cards, savedCardIds = new Set<string>() } = $props<{
+		stage: FunnelStage;
+		cards: CRMCard[];
+		savedCardIds?: Set<string>;
+	}>();
 </script>
 
 <section class="funnel-column" aria-labelledby={`stage-${stage}`}>
@@ -14,7 +18,12 @@
 	<div class="cards-list">
 		{#if cards.length > 0}
 			{#each cards as card (card.id)}
-				<CardCRM {card} compact />
+				<div class="card-shell">
+					<CardCRM {card} compact />
+					{#if savedCardIds.has(card.id)}
+						<p class="local-badge">Salvo localmente</p>
+					{/if}
+				</div>
 			{/each}
 		{:else}
 			<p class="empty-state">Nenhum card nesta etapa.</p>
@@ -67,6 +76,22 @@
 		gap: 1rem;
 		overflow-y: auto;
 		padding-bottom: 0.25rem;
+	}
+
+	.card-shell {
+		display: grid;
+		gap: 0.5rem;
+	}
+
+	.local-badge {
+		width: fit-content;
+		margin: 0;
+		border-radius: 999px;
+		padding: 0.35rem 0.65rem;
+		background: rgba(76, 99, 242, 0.12);
+		color: #3446c5;
+		font-size: 0.78rem;
+		font-weight: 900;
 	}
 
 	.empty-state {

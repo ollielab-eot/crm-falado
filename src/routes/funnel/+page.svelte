@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import FunnelColumn from '$lib/components/FunnelColumn.svelte';
+	import { clearSavedCards, getSavedCards } from '$lib/utils/localCards';
 	import type { CRMCard, FunnelStage, Priority } from '$lib/types';
 
 	const stages: FunnelStage[] = [
@@ -101,9 +103,17 @@
 
 	let searchTerm = $state('');
 	let priorityFilter = $state<Priority | 'todas'>('todas');
+	let savedCards = $state<CRMCard[]>([]);
+
+	onMount(() => {
+		savedCards = getSavedCards();
+	});
+
+	let savedCardIds = $derived(new Set(savedCards.map((card) => card.id)));
+	let allCards = $derived([...mockedCards, ...savedCards]);
 
 	let filteredCards = $derived(
-		mockedCards.filter((card) => {
+		allCards.filter((card) => {
 			const term = searchTerm.trim().toLowerCase();
 			const matchesTerm =
 				term.length === 0 ||
@@ -119,6 +129,11 @@
 	function cardsByStage(stage: FunnelStage) {
 		return filteredCards.filter((card) => card.etapa_funil === stage);
 	}
+
+	function clearLocalCards() {
+		clearSavedCards();
+		savedCards = [];
+	}
 </script>
 
 <svelte:head>
@@ -128,7 +143,10 @@
 
 <main class="funnel-page">
 	<section class="hero" aria-labelledby="page-title">
-		<a class="back-link" href="/">← Voltar para início</a>
+		<nav class="nav-links" aria-label="Navegação principal">
+			<a class="back-link" href="/">← Voltar para início</a>
+			<a class="back-link" href="/new">Criar novo card</a>
+		</nav>
 		<div>
 			<p class="eyebrow">Sprint 2 · Funil CRM</p>
 			<h1 id="page-title">Cards mockados organizados por etapa do funil.</h1>
@@ -153,11 +171,14 @@
 			</select>
 		</label>
 		<p>{filteredCards.length} cards encontrados</p>
+		{#if savedCards.length > 0}
+			<button class="clear-saved" type="button" onclick={clearLocalCards}>Limpar cards salvos</button>
+		{/if}
 	</section>
 
 	<section class="funnel-board" aria-label="Colunas do funil CRM">
 		{#each stages as stage}
-			<FunnelColumn {stage} cards={cardsByStage(stage)} />
+			<FunnelColumn {stage} cards={cardsByStage(stage)} {savedCardIds} />
 		{/each}
 	</section>
 </main>
@@ -196,6 +217,13 @@
 		max-width: 1180px;
 		margin: 0 auto 1.5rem;
 		gap: 1.5rem;
+	}
+
+	.nav-links {
+		display: flex;
+		width: fit-content;
+		gap: 0.75rem;
+		flex-wrap: wrap;
 	}
 
 	.back-link {
@@ -254,6 +282,7 @@
 		color: #22325f;
 	}
 
+	button.clear-saved,
 	input,
 	select {
 		width: min(78vw, 320px);
