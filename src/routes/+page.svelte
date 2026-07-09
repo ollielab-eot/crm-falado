@@ -55,7 +55,10 @@
 			<p class="intro">
 				Mock visual para validar cartas colecionáveis com frente, verso e informações comerciais acionáveis.
 			</p>
-			<a class="funnel-link" href="/funnel">Ver funil mockado da Sprint 2</a>
+			<div class="home-actions">
+				<a class="funnel-link" href="/new">Criar novo card</a>
+				<a class="funnel-link secondary" href="/funnel">Ver funil mockado da Sprint 2</a>
+			</div>
 		</div>
 
 		<div class="cards-row" aria-label="Cards CRM">
@@ -141,9 +144,16 @@
 		color: #273858;
 	}
 
+	.home-actions {
+		display: flex;
+		justify-content: center;
+		gap: 0.75rem;
+		flex-wrap: wrap;
+		margin-top: 1.5rem;
+	}
+
 	.funnel-link {
 		display: inline-flex;
-		margin-top: 1.5rem;
 		border-radius: 999px;
 		padding: 0.85rem 1.1rem;
 		background: #22325f;
@@ -151,6 +161,11 @@
 		font-weight: 900;
 		text-decoration: none;
 		box-shadow: 0 16px 35px rgba(32, 45, 84, 0.18);
+	}
+
+	.funnel-link.secondary {
+		background: #ffffff;
+		color: #22325f;
 	}
 
 	.cards-row {
