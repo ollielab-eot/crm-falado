@@ -128,7 +128,10 @@
 
 <main class="funnel-page">
 	<section class="hero" aria-labelledby="page-title">
-		<a class="back-link" href="/">← Voltar para início</a>
+		<nav class="hero-actions" aria-label="Navegação do funil">
+			<a class="back-link" href="/">← Voltar para início</a>
+			<a class="back-link primary" href="/new">Novo card por texto</a>
+		</nav>
 		<div>
 			<p class="eyebrow">Sprint 2 · Funil CRM</p>
 			<h1 id="page-title">Cards mockados organizados por etapa do funil.</h1>
@@ -198,6 +201,12 @@
 		gap: 1.5rem;
 	}
 
+	.hero-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+	}
+
 	.back-link {
 		width: fit-content;
 		border-radius: 999px;
@@ -207,6 +216,11 @@
 		font-weight: 900;
 		text-decoration: none;
 		box-shadow: 0 10px 30px rgba(32, 45, 84, 0.1);
+	}
+
+	.back-link.primary {
+		background: #22325f;
+		color: #fff;
 	}
 
 	.eyebrow {
