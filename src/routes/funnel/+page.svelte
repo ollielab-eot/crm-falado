@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import FunnelColumn from '$lib/components/FunnelColumn.svelte';
+	import { clearApiCards, fetchApiCards } from '$lib/utils/cardsApi';
 	import { clearSavedCards, getSavedCards } from '$lib/utils/localCards';
 	import type { CRMCard, FunnelStage, Priority } from '$lib/types';
 
@@ -104,13 +105,16 @@
 	let searchTerm = $state('');
 	let priorityFilter = $state<Priority | 'todas'>('todas');
 	let savedCards = $state<CRMCard[]>([]);
+	let apiCards = $state<CRMCard[]>([]);
+	let apiMessage = $state('');
 
 	onMount(() => {
 		savedCards = getSavedCards();
 	});
 
 	let savedCardIds = $derived(new Set(savedCards.map((card) => card.id)));
-	let allCards = $derived([...mockedCards, ...savedCards]);
+	let apiCardIds = $derived(new Set(apiCards.map((card) => card.id)));
+	let allCards = $derived([...mockedCards, ...savedCards, ...apiCards]);
 
 	let filteredCards = $derived(
 		allCards.filter((card) => {
@@ -133,6 +137,17 @@
 	function clearLocalCards() {
 		clearSavedCards();
 		savedCards = [];
+	}
+
+	async function loadApiCards() {
+		apiCards = await fetchApiCards();
+		apiMessage = `${apiCards.length} cards carregados da API experimental.`;
+	}
+
+	async function clearExperimentalApiCards() {
+		await clearApiCards();
+		apiCards = [];
+		apiMessage = 'Cards da API experimental removidos da tela.';
 	}
 </script>
 
@@ -176,9 +191,23 @@
 		{/if}
 	</section>
 
+	<section class="persistence-experiments" aria-label="Experimentos de persistência">
+		<div>
+			<p class="experiment-title">Experimentos de persistência</p>
+			<p class="experiment-copy">API temporária em memória para preparar a futura integração com Turso.</p>
+		</div>
+		<div class="experiment-actions">
+			<button type="button" onclick={loadApiCards}>Carregar cards da API experimental</button>
+			<button type="button" onclick={clearExperimentalApiCards}>Limpar cards da API</button>
+		</div>
+		{#if apiMessage}
+			<p class="api-message">{apiMessage}</p>
+		{/if}
+	</section>
+
 	<section class="funnel-board" aria-label="Colunas do funil CRM">
 		{#each stages as stage}
-			<FunnelColumn {stage} cards={cardsByStage(stage)} {savedCardIds} />
+			<FunnelColumn {stage} cards={cardsByStage(stage)} {savedCardIds} {apiCardIds} />
 		{/each}
 	</section>
 </main>
@@ -262,6 +291,7 @@
 		color: #273858;
 	}
 
+	.persistence-experiments,
 	.filters {
 		display: flex;
 		max-width: 1180px;
@@ -283,6 +313,7 @@
 	}
 
 	button.clear-saved,
+	.experiment-actions button,
 	input,
 	select {
 		width: min(78vw, 320px);
@@ -292,6 +323,38 @@
 		background: #fff;
 		font: inherit;
 		color: #14213d;
+	}
+
+	.persistence-experiments {
+		align-items: center;
+	}
+
+	.experiment-title,
+	.experiment-copy,
+	.api-message {
+		margin: 0;
+	}
+
+	.experiment-title {
+		font-weight: 900;
+		color: #22325f;
+	}
+
+	.experiment-copy,
+	.api-message {
+		font-size: 0.9rem;
+		font-weight: 800;
+		color: #52627f;
+	}
+
+	.experiment-actions {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+
+	.experiment-actions button {
+		width: auto;
 	}
 
 	.filters p {
@@ -321,4 +384,5 @@
 			margin-left: 0;
 		}
 	}
+
 </style>

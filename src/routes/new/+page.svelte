@@ -1,11 +1,13 @@
 <script lang="ts">
 	import CardCRM from '$lib/components/CardCRM.svelte';
+	import { createApiCard } from '$lib/utils/cardsApi';
 	import { saveCard } from '$lib/utils/localCards';
 	import type { CRMCard } from '$lib/types';
 
 	let originalText = $state('');
 	let generatedCard = $state<CRMCard | null>(null);
 	let successMessage = $state('');
+	let apiMessage = $state('');
 
 	function createCardId() {
 		if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -44,6 +46,7 @@
 	function generatePreview() {
 		generatedCard = mockExtractCRM(originalText);
 		successMessage = '';
+		apiMessage = '';
 	}
 
 	function saveGeneratedCard() {
@@ -55,10 +58,20 @@
 		successMessage = 'Card salvo no funil.';
 	}
 
+	async function saveGeneratedCardViaApi() {
+		if (!generatedCard) {
+			return;
+		}
+
+		generatedCard = await createApiCard(generatedCard);
+		apiMessage = 'Card salvo via API experimental.';
+	}
+
 	function clearForm() {
 		originalText = '';
 		generatedCard = null;
 		successMessage = '';
+		apiMessage = '';
 	}
 </script>
 
@@ -100,6 +113,12 @@
 				<CardCRM card={generatedCard} />
 				<div class="save-actions">
 					<button type="button" onclick={saveGeneratedCard}>Salvar no funil</button>
+					<button class="experimental-button" type="button" onclick={saveGeneratedCardViaApi}>
+						Salvar via API experimental
+					</button>
+					{#if apiMessage}
+						<p class="success">{apiMessage}</p>
+					{/if}
 					{#if successMessage}
 						<p class="success">{successMessage}</p>
 						<a class="funnel-button" href="/funnel">Ver no funil</a>
@@ -172,7 +191,8 @@
 
 	.nav-links a,
 	.secondary,
-	.funnel-button {
+	.funnel-button,
+	.experimental-button {
 		background: #ffffff;
 		color: #22325f;
 	}

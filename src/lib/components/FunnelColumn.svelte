@@ -2,10 +2,11 @@
 	import type { CRMCard, FunnelStage } from '$lib/types';
 	import CardCRM from './CardCRM.svelte';
 
-	let { stage, cards, savedCardIds = new Set<string>() } = $props<{
+	let { stage, cards, savedCardIds = new Set<string>(), apiCardIds = new Set<string>() } = $props<{
 		stage: FunnelStage;
 		cards: CRMCard[];
 		savedCardIds?: Set<string>;
+		apiCardIds?: Set<string>;
 	}>();
 </script>
 
@@ -22,6 +23,9 @@
 					<CardCRM {card} compact />
 					{#if savedCardIds.has(card.id)}
 						<p class="local-badge">Salvo localmente</p>
+					{/if}
+					{#if apiCardIds.has(card.id)}
+						<p class="api-badge">API experimental</p>
 					{/if}
 				</div>
 			{/each}
@@ -83,6 +87,7 @@
 		gap: 0.5rem;
 	}
 
+	.api-badge,
 	.local-badge {
 		width: fit-content;
 		margin: 0;
@@ -92,6 +97,11 @@
 		color: #3446c5;
 		font-size: 0.78rem;
 		font-weight: 900;
+	}
+
+	.api-badge {
+		background: rgba(21, 115, 71, 0.12);
+		color: #157347;
 	}
 
 	.empty-state {
