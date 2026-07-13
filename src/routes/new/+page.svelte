@@ -2,6 +2,7 @@
 	import CardCRM from '$lib/components/CardCRM.svelte';
 	import { createApiCard } from '$lib/utils/cardsApi';
 	import { saveCard } from '$lib/utils/localCards';
+	import { extractCrmWithAI } from '$lib/utils/extractCrmApi';
 	import type { CRMCard } from '$lib/types';
 
 	let originalText = $state('');
@@ -10,6 +11,8 @@
 	let apiMessage = $state('');
 	let apiError = $state('');
 	let isSavingToCrm = $state(false);
+	let isGeneratingPreview = $state(false);
+	let fallbackMessage = $state('');
 
 	function createCardId() {
 		if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -45,12 +48,29 @@
 		};
 	}
 
-	function generatePreview() {
-		generatedCard = mockExtractCRM(originalText);
+	async function generatePreview() {
+		const text = originalText.trim();
+
+		if (!text) {
+			apiError = 'Informe um texto comercial para gerar o preview.';
+			return;
+		}
+
 		successMessage = '';
 		apiMessage = '';
 		apiError = '';
+		fallbackMessage = '';
 		isSavingToCrm = false;
+		isGeneratingPreview = true;
+
+		try {
+			generatedCard = await extractCrmWithAI(text);
+		} catch {
+			generatedCard = mockExtractCRM(text);
+			fallbackMessage = 'IA indisponível. Preview gerado com regra local.';
+		} finally {
+			isGeneratingPreview = false;
+		}
 	}
 
 	function saveGeneratedCard() {
@@ -88,7 +108,9 @@
 		successMessage = '';
 		apiMessage = '';
 		apiError = '';
+		fallbackMessage = '';
 		isSavingToCrm = false;
+		isGeneratingPreview = false;
 	}
 </script>
 
@@ -103,10 +125,10 @@
 			<a href="/">← Início</a>
 			<a href="/funnel">Ver funil</a>
 		</nav>
-		<p class="eyebrow">Sprint 7 · Novo card</p>
+		<p class="eyebrow">Sprint 8 · Novo card</p>
 		<h1 id="page-title">Cole uma conversa comercial e gere um preview de card.</h1>
 		<p class="intro">
-			O extrator ainda é mockado: sem OpenAI ou áudio. Ao salvar, o card entra no CRM via Turso e aparece automaticamente no funil.
+			O extrator usa IA no servidor e mantém fallback local quando a IA estiver indisponível. Ao salvar, o card entra no CRM via Turso e aparece automaticamente no funil.
 		</p>
 	</section>
 
@@ -120,12 +142,23 @@
 			></textarea>
 
 			<div class="actions">
-				<button type="submit">Gerar preview do card</button>
+				<button type="submit" disabled={isGeneratingPreview}>
+					{isGeneratingPreview ? 'Gerando card com IA...' : 'Gerar preview do card'}
+				</button>
 				<button class="secondary" type="button" onclick={clearForm}>Limpar</button>
 			</div>
 		</form>
 
 		<div class="preview-panel">
+			{#if isGeneratingPreview}
+				<p class="loading">Gerando card com IA...</p>
+			{/if}
+			{#if fallbackMessage}
+				<p class="warning">{fallbackMessage}</p>
+			{/if}
+			{#if apiError && !generatedCard}
+				<p class="error">{apiError}</p>
+			{/if}
 			{#if generatedCard}
 				<CardCRM card={generatedCard} />
 				<div class="save-actions">
@@ -290,7 +323,9 @@
 	}
 
 	.success,
-	.error {
+	.error,
+	.warning,
+	.loading {
 		margin: 0;
 		font-weight: 900;
 	}
@@ -301,6 +336,14 @@
 
 	.error {
 		color: #b42318;
+	}
+
+	.warning {
+		color: #b54708;
+	}
+
+	.loading {
+		color: #22325f;
 	}
 
 	button:disabled {

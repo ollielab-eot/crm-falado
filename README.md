@@ -56,3 +56,13 @@ npm run dev
 ```
 
 Não inclua valores reais de secrets no repositório.
+
+## Configuração IA
+
+Para gerar previews reais de cards CRM por IA na rota `/new`, defina a variável `OPENAI_API_KEY` no arquivo `.env` local antes de iniciar o app.
+
+```sh
+OPENAI_API_KEY=
+```
+
+Não inclua valores reais de secrets no repositório. Se a chave não estiver configurada ou a IA estiver indisponível, a tela `/new` usa o fallback local `mockExtractCRM` para manter o fluxo de preview funcionando.
