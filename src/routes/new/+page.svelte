@@ -8,6 +8,8 @@
 	let generatedCard = $state<CRMCard | null>(null);
 	let successMessage = $state('');
 	let apiMessage = $state('');
+	let apiError = $state('');
+	let isSavingToCrm = $state(false);
 
 	function createCardId() {
 		if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -39,7 +41,7 @@
 			objecao: 'Ainda é necessário validar timing, orçamento e prioridade interna antes de avançar.',
 			proxima_acao: 'Retomar contato com demonstração curta e exemplos de cards gerados pelo MVP.',
 			tags: isDimensa ? ['dimensa', 'mvp', 'relacionamento'] : ['mvp', 'relacionamento', 'follow-up'],
-			historico: ['Preview gerado via mockExtractCRM.', 'Card ainda sem integração com IA, banco ou áudio.']
+			historico: ['Preview gerado via mockExtractCRM.', 'Card ainda sem integração com IA ou áudio.']
 		};
 	}
 
@@ -47,6 +49,8 @@
 		generatedCard = mockExtractCRM(originalText);
 		successMessage = '';
 		apiMessage = '';
+		apiError = '';
+		isSavingToCrm = false;
 	}
 
 	function saveGeneratedCard() {
@@ -63,8 +67,19 @@
 			return;
 		}
 
-		generatedCard = await createApiCard(generatedCard);
-		apiMessage = 'Card salvo via API experimental.';
+		isSavingToCrm = true;
+		apiMessage = '';
+		apiError = '';
+
+		try {
+			generatedCard = await createApiCard(generatedCard);
+			apiMessage = 'Card salvo no CRM.';
+			successMessage = '';
+		} catch (error) {
+			apiError = error instanceof Error ? error.message : 'Não foi possível salvar o card no CRM.';
+		} finally {
+			isSavingToCrm = false;
+		}
 	}
 
 	function clearForm() {
@@ -72,6 +87,8 @@
 		generatedCard = null;
 		successMessage = '';
 		apiMessage = '';
+		apiError = '';
+		isSavingToCrm = false;
 	}
 </script>
 
@@ -86,10 +103,10 @@
 			<a href="/">← Início</a>
 			<a href="/funnel">Ver funil</a>
 		</nav>
-		<p class="eyebrow">Sprint 3 + 4 · Novo card</p>
+		<p class="eyebrow">Sprint 7 · Novo card</p>
 		<h1 id="page-title">Cole uma conversa comercial e gere um preview de card.</h1>
 		<p class="intro">
-			O extrator ainda é mockado: sem OpenAI, áudio, Turso ou banco. Nesta Sprint, o card pode ser salvo temporariamente no localStorage.
+			O extrator ainda é mockado: sem OpenAI ou áudio. Ao salvar, o card entra no CRM via Turso e aparece automaticamente no funil.
 		</p>
 	</section>
 
@@ -112,18 +129,25 @@
 			{#if generatedCard}
 				<CardCRM card={generatedCard} />
 				<div class="save-actions">
-					<button type="button" onclick={saveGeneratedCard}>Salvar no funil</button>
-					<button class="experimental-button" type="button" onclick={saveGeneratedCardViaApi}>
-						Salvar via API experimental
+					<button type="button" onclick={saveGeneratedCardViaApi} disabled={isSavingToCrm}>
+						{isSavingToCrm ? 'Salvando...' : 'Salvar no CRM'}
 					</button>
 					{#if apiMessage}
 						<p class="success">{apiMessage}</p>
-					{/if}
-					{#if successMessage}
-						<p class="success">{successMessage}</p>
 						<a class="funnel-button" href="/funnel">Ver no funil</a>
 					{/if}
+					{#if apiError}
+						<p class="error">{apiError}</p>
+					{/if}
 				</div>
+				<details class="legacy-persistence">
+					<summary>Persistência local legado</summary>
+					<p>Use apenas para validar cards no navegador sem passar pelo CRM.</p>
+					<button class="secondary legacy-button" type="button" onclick={saveGeneratedCard}>Salvar no funil local</button>
+					{#if successMessage}
+						<p class="success">{successMessage}</p>
+					{/if}
+				</details>
 				<article class="original-text">
 					<h2>Texto original</h2>
 					<p>{originalText || 'Nenhum texto informado.'}</p>
@@ -191,8 +215,7 @@
 
 	.nav-links a,
 	.secondary,
-	.funnel-button,
-	.experimental-button {
+	.funnel-button {
 		background: #ffffff;
 		color: #22325f;
 	}
@@ -266,10 +289,44 @@
 		justify-items: center;
 	}
 
-	.success {
+	.success,
+	.error {
 		margin: 0;
 		font-weight: 900;
+	}
+
+	.success {
 		color: #157347;
+	}
+
+	.error {
+		color: #b42318;
+	}
+
+	button:disabled {
+		cursor: wait;
+		opacity: 0.68;
+	}
+
+	.legacy-persistence {
+		width: 100%;
+		border-top: 1px solid rgba(74, 93, 142, 0.16);
+		padding-top: 0.75rem;
+		color: #52627f;
+	}
+
+	.legacy-persistence summary {
+		cursor: pointer;
+		font-weight: 900;
+		color: #52627f;
+	}
+
+	.legacy-persistence p {
+		margin: 0.5rem 0;
+	}
+
+	.legacy-button {
+		padding: 0.65rem 0.9rem;
 	}
 
 	.original-text {

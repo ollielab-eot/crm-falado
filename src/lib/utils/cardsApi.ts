@@ -10,7 +10,7 @@ type CardResponse = {
 
 async function parseJsonResponse<T>(response: Response): Promise<T> {
 	if (!response.ok) {
-		throw new Error('Falha ao acessar a API experimental de cards.');
+		throw new Error('Não foi possível acessar os cards do CRM.');
 	}
 
 	return (await response.json()) as T;

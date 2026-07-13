@@ -2,9 +2,16 @@
 	import type { CRMCard, FunnelStage } from '$lib/types';
 	import CardCRM from './CardCRM.svelte';
 
-	let { stage, cards, savedCardIds = new Set<string>(), apiCardIds = new Set<string>() } = $props<{
+	let {
+		stage,
+		cards,
+		mockedCardIds = new Set<string>(),
+		savedCardIds = new Set<string>(),
+		apiCardIds = new Set<string>()
+	} = $props<{
 		stage: FunnelStage;
 		cards: CRMCard[];
+		mockedCardIds?: Set<string>;
 		savedCardIds?: Set<string>;
 		apiCardIds?: Set<string>;
 	}>();
@@ -21,12 +28,17 @@
 			{#each cards as card (card.id)}
 				<div class="card-shell">
 					<CardCRM {card} compact />
-					{#if savedCardIds.has(card.id)}
-						<p class="local-badge">Salvo localmente</p>
-					{/if}
-					{#if apiCardIds.has(card.id)}
-						<p class="api-badge">API experimental</p>
-					{/if}
+					<div class="source-badges" aria-label="Origem do card">
+						{#if mockedCardIds.has(card.id)}
+							<p class="mock-badge">Mock</p>
+						{/if}
+						{#if savedCardIds.has(card.id)}
+							<p class="local-badge">Local</p>
+						{/if}
+						{#if apiCardIds.has(card.id)}
+							<p class="api-badge">CRM</p>
+						{/if}
+					</div>
 				</div>
 			{/each}
 		{:else}
@@ -87,8 +99,15 @@
 		gap: 0.5rem;
 	}
 
+	.source-badges {
+		display: flex;
+		gap: 0.4rem;
+		flex-wrap: wrap;
+	}
+
 	.api-badge,
-	.local-badge {
+	.local-badge,
+	.mock-badge {
 		width: fit-content;
 		margin: 0;
 		border-radius: 999px;
@@ -102,6 +121,11 @@
 	.api-badge {
 		background: rgba(21, 115, 71, 0.12);
 		color: #157347;
+	}
+
+	.mock-badge {
+		background: rgba(82, 98, 127, 0.12);
+		color: #52627f;
 	}
 
 	.empty-state {

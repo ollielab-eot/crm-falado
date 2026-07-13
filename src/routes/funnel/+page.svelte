@@ -107,13 +107,17 @@
 	let savedCards = $state<CRMCard[]>([]);
 	let apiCards = $state<CRMCard[]>([]);
 	let apiMessage = $state('');
+	let apiError = $state('');
+	let isLoadingCrmCards = $state(false);
 
 	onMount(() => {
 		savedCards = getSavedCards();
+		void loadApiCards();
 	});
 
 	let savedCardIds = $derived(new Set(savedCards.map((card) => card.id)));
 	let apiCardIds = $derived(new Set(apiCards.map((card) => card.id)));
+	let mockedCardIds = $derived(new Set(mockedCards.map((card) => card.id)));
 	let allCards = $derived([...mockedCards, ...savedCards, ...apiCards]);
 
 	let filteredCards = $derived(
@@ -140,14 +144,26 @@
 	}
 
 	async function loadApiCards() {
-		apiCards = await fetchApiCards();
-		apiMessage = `${apiCards.length} cards carregados da API experimental.`;
+		isLoadingCrmCards = true;
+		apiError = '';
+
+		try {
+			apiCards = await fetchApiCards();
+			apiMessage = `${apiCards.length} cards do CRM carregados.`;
+		} catch (error) {
+			apiCards = [];
+			apiMessage = '';
+			apiError = 'Não foi possível carregar os cards do CRM.';
+		} finally {
+			isLoadingCrmCards = false;
+		}
 	}
 
 	async function clearExperimentalApiCards() {
 		await clearApiCards();
 		apiCards = [];
-		apiMessage = 'Cards da API experimental removidos da tela.';
+		apiError = '';
+		apiMessage = 'Cards do CRM removidos.';
 	}
 </script>
 
@@ -163,10 +179,10 @@
 			<a class="back-link" href="/new">Criar novo card</a>
 		</nav>
 		<div>
-			<p class="eyebrow">Sprint 2 · Funil CRM</p>
-			<h1 id="page-title">Cards mockados organizados por etapa do funil.</h1>
+			<p class="eyebrow">Sprint 7 · Funil CRM</p>
+			<h1 id="page-title">Cards do CRM organizados por etapa do funil.</h1>
 			<p class="intro">
-				Busque por empresa, pessoa ou tag e filtre por prioridade sem integrar banco, IA ou drag and drop.
+				Os cards do CRM carregam automaticamente do Turso. Os cards Mock continuam como demonstração do produto.
 			</p>
 		</div>
 	</section>
@@ -191,23 +207,27 @@
 		{/if}
 	</section>
 
-	<section class="persistence-experiments" aria-label="Experimentos de persistência">
+	<section class="crm-actions" aria-label="Ações do CRM">
 		<div>
-			<p class="experiment-title">Experimentos de persistência</p>
-			<p class="experiment-copy">API temporária em memória para preparar a futura integração com Turso.</p>
+			<p class="crm-title">Ações do CRM</p>
+			<p class="crm-copy">Dados reais carregados do Turso. Cards com selo Mock são apenas demonstração.</p>
 		</div>
-		<div class="experiment-actions">
-			<button type="button" onclick={loadApiCards}>Carregar cards da API experimental</button>
-			<button type="button" onclick={clearExperimentalApiCards}>Limpar cards da API</button>
+		<div class="crm-action-buttons">
+			<button type="button" onclick={loadApiCards} disabled={isLoadingCrmCards}>Recarregar cards do CRM</button>
+			<button type="button" onclick={clearExperimentalApiCards}>Limpar cards do CRM</button>
 		</div>
-		{#if apiMessage}
+		{#if isLoadingCrmCards}
+			<p class="api-message">Carregando cards do CRM...</p>
+		{:else if apiError}
+			<p class="api-error">{apiError}</p>
+		{:else if apiMessage}
 			<p class="api-message">{apiMessage}</p>
 		{/if}
 	</section>
 
 	<section class="funnel-board" aria-label="Colunas do funil CRM">
 		{#each stages as stage}
-			<FunnelColumn {stage} cards={cardsByStage(stage)} {savedCardIds} {apiCardIds} />
+			<FunnelColumn {stage} cards={cardsByStage(stage)} {mockedCardIds} {savedCardIds} {apiCardIds} />
 		{/each}
 	</section>
 </main>
@@ -291,7 +311,7 @@
 		color: #273858;
 	}
 
-	.persistence-experiments,
+	.crm-actions,
 	.filters {
 		display: flex;
 		max-width: 1180px;
@@ -313,7 +333,7 @@
 	}
 
 	button.clear-saved,
-	.experiment-actions button,
+	.crm-action-buttons button,
 	input,
 	select {
 		width: min(78vw, 320px);
@@ -325,35 +345,49 @@
 		color: #14213d;
 	}
 
-	.persistence-experiments {
+	.crm-actions {
 		align-items: center;
 	}
 
-	.experiment-title,
-	.experiment-copy,
-	.api-message {
+	.crm-title,
+	.crm-copy,
+	.api-message,
+	.api-error {
 		margin: 0;
 	}
 
-	.experiment-title {
+	.crm-title {
 		font-weight: 900;
 		color: #22325f;
 	}
 
-	.experiment-copy,
-	.api-message {
+	.crm-copy,
+	.api-message,
+	.api-error {
 		font-size: 0.9rem;
 		font-weight: 800;
+	}
+
+	.api-message {
 		color: #52627f;
 	}
 
-	.experiment-actions {
+	.api-error {
+		color: #b42318;
+	}
+
+	button:disabled {
+		cursor: wait;
+		opacity: 0.68;
+	}
+
+	.crm-action-buttons {
 		display: flex;
 		gap: 0.5rem;
 		flex-wrap: wrap;
 	}
 
-	.experiment-actions button {
+	.crm-action-buttons button {
 		width: auto;
 	}
 
