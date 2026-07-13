@@ -40,3 +40,19 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+
+## Configuração Turso
+
+Para persistir os cards salvos pela API experimental em um banco Turso:
+
+1. Crie um banco de dados Turso para o projeto.
+2. Defina `TURSO_DATABASE_URL` no seu arquivo `.env` local.
+3. Defina `TURSO_AUTH_TOKEN` no seu arquivo `.env` local.
+4. Rode manualmente a migration `migrations/001_init.sql` no banco Turso.
+5. Inicie o app em desenvolvimento:
+
+```sh
+npm run dev
+```
+
+Não inclua valores reais de secrets no repositório.
