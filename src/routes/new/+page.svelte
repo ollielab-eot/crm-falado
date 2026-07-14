@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AudioUploadPanel from '$lib/components/AudioUploadPanel.svelte';
 	import CardCRM from '$lib/components/CardCRM.svelte';
 	import { createApiCard } from '$lib/utils/cardsApi';
 	import { saveCard } from '$lib/utils/localCards';
@@ -13,6 +14,7 @@
 	let isSavingToCrm = $state(false);
 	let isGeneratingPreview = $state(false);
 	let fallbackMessage = $state('');
+	let audioResetKey = $state(0);
 
 	function createCardId() {
 		if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -102,6 +104,15 @@
 		}
 	}
 
+	function handleAudioTranscribed(text: string) {
+		originalText = text;
+		generatedCard = null;
+		successMessage = '';
+		apiMessage = '';
+		apiError = '';
+		fallbackMessage = '';
+	}
+
 	function clearForm() {
 		originalText = '';
 		generatedCard = null;
@@ -111,6 +122,7 @@
 		fallbackMessage = '';
 		isSavingToCrm = false;
 		isGeneratingPreview = false;
+		audioResetKey += 1;
 	}
 </script>
 
@@ -125,15 +137,17 @@
 			<a href="/">← Início</a>
 			<a href="/funnel">Ver funil</a>
 		</nav>
-		<p class="eyebrow">Sprint 8 · Novo card</p>
+		<p class="eyebrow">Sprint 9 · Novo card</p>
 		<h1 id="page-title">Cole uma conversa comercial e gere um preview de card.</h1>
 		<p class="intro">
-			O extrator usa IA no servidor e mantém fallback local quando a IA estiver indisponível. Ao salvar, o card entra no CRM via Turso e aparece automaticamente no funil.
+			O extrator usa IA no servidor e mantém fallback local quando a IA estiver indisponível. Agora você também pode transcrever áudio no servidor antes de gerar o card. Ao salvar, o card entra no CRM via Turso e aparece automaticamente no funil.
 		</p>
 	</section>
 
 	<section class="workspace" aria-label="Gerador de card">
 		<form class="input-panel" onsubmit={(event) => { event.preventDefault(); generatePreview(); }}>
+			<AudioUploadPanel onTranscribed={handleAudioTranscribed} resetKey={audioResetKey} />
+
 			<label for="conversation">Texto original</label>
 			<textarea
 				id="conversation"
