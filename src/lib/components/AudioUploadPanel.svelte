@@ -6,19 +6,24 @@
 		resetKey: number;
 	};
 
-	let { onTranscribed, resetKey }: Props = $props();
+	let props: Props = $props();
 	let selectedFile = $state<File | null>(null);
 	let isTranscribing = $state(false);
 	let errorMessage = $state('');
 	let fileInput = $state<HTMLInputElement | null>(null);
-	let lastResetKey = $state(resetKey);
+	let lastResetKey = $state<number | null>(null);
 
 	$effect(() => {
-		if (resetKey !== lastResetKey) {
+		if (lastResetKey === null) {
+			lastResetKey = props.resetKey;
+			return;
+		}
+
+		if (props.resetKey !== lastResetKey) {
 			selectedFile = null;
 			isTranscribing = false;
 			errorMessage = '';
-			lastResetKey = resetKey;
+			lastResetKey = props.resetKey;
 
 			if (fileInput) {
 				fileInput.value = '';
@@ -51,7 +56,7 @@
 		errorMessage = '';
 
 		try {
-			onTranscribed(await transcribeAudioFile(selectedFile));
+			props.onTranscribed(await transcribeAudioFile(selectedFile));
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Não foi possível transcrever o áudio.';
 		} finally {

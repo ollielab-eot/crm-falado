@@ -9,10 +9,38 @@ const ACCEPTED_AUDIO_TYPES = new Set([
 	'audio/webm',
 	'audio/mp4',
 	'audio/m4a',
-	'audio/x-m4a'
+	'audio/x-m4a',
+	'video/mp4'
 ]);
 
+const ACCEPTED_AUDIO_EXTENSIONS = new Set(['.mp3', '.wav', '.m4a', '.webm', '.mp4']);
 const MAX_AUDIO_SIZE_BYTES = 20 * 1024 * 1024;
+
+function getFileExtension(fileName: string) {
+	const extensionStart = fileName.lastIndexOf('.');
+
+	if (extensionStart < 0) {
+		return '';
+	}
+
+	return fileName.slice(extensionStart).toLowerCase();
+}
+
+function getDetectedFormatMessage(file: File) {
+	const detectedType = file.type || 'MIME vazio';
+	const detectedExtension = getFileExtension(file.name) || 'sem extensão';
+
+	return `Formato detectado: ${detectedType}, extensão ${detectedExtension}. Tente mp3, wav, m4a, webm ou mp4.`;
+}
+
+function isAcceptedAudioFile(file: File) {
+	const extension = getFileExtension(file.name);
+	const hasAcceptedType = ACCEPTED_AUDIO_TYPES.has(file.type);
+	const hasAcceptedExtension = ACCEPTED_AUDIO_EXTENSIONS.has(extension);
+	const hasLooseType = !file.type || file.type === 'application/octet-stream';
+
+	return hasAcceptedType || (hasLooseType && hasAcceptedExtension);
+}
 
 export const POST: RequestHandler = async ({ request }) => {
 	let formData: FormData;
@@ -29,9 +57,22 @@ export const POST: RequestHandler = async ({ request }) => {
 		return json({ message: 'Selecione um arquivo de áudio para transcrever.' }, { status: 400 });
 	}
 
-	if (!ACCEPTED_AUDIO_TYPES.has(audio.type)) {
+	console.info('Arquivo recebido para transcrição', {
+		name: audio.name,
+		type: audio.type,
+		size: audio.size
+	});
+
+	if (!isAcceptedAudioFile(audio)) {
 		return json(
-			{ message: 'Formato de áudio não suportado. Envie mp3, wav, m4a, webm ou mp4.' },
+			{
+				message: `Formato de áudio não suportado. ${getDetectedFormatMessage(audio)}`,
+				file: {
+					name: audio.name,
+					type: audio.type,
+					size: audio.size
+				}
+			},
 			{ status: 415 }
 		);
 	}
@@ -46,8 +87,17 @@ export const POST: RequestHandler = async ({ request }) => {
 		const detail = error instanceof Error ? error.message : 'Não foi possível transcrever o áudio.';
 		const status = detail.includes('OPENAI_API_KEY') ? 503 : 502;
 
+		console.error('Erro ao transcrever áudio com OpenAI', {
+			file: {
+				name: audio.name,
+				type: audio.type,
+				size: audio.size
+			},
+			error
+		});
+
 		return json(
-			{ message: 'Transcrição indisponível no momento. Tente novamente em instantes.', detail },
+			{ message: 'Transcrição indisponível no momento. Tente novamente em instantes.' },
 			{ status }
 		);
 	}
