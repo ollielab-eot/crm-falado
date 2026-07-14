@@ -66,3 +66,17 @@ OPENAI_API_KEY=
 ```
 
 Não inclua valores reais de secrets no repositório. Se a chave não estiver configurada ou a IA estiver indisponível, a tela `/new` usa o fallback local `mockExtractCRM` para manter o fluxo de preview funcionando.
+
+## Transcrição de áudio
+
+A tela `/new` permite enviar um arquivo de áudio curto para transcrição server-side com a OpenAI API antes de gerar o preview do card CRM. Para usar esse fluxo, defina `OPENAI_API_KEY` no arquivo `.env` local; a chave é lida apenas no servidor e não deve ser exposta no frontend.
+
+Formatos aceitos no MVP:
+
+- mp3
+- wav
+- m4a
+- webm
+- mp4
+
+O endpoint `/api/transcribe` recebe `FormData` com o campo `audio` e limita o upload a 20 MB. O áudio não é gravado em disco, não é salvo no Turso e serve apenas para retornar o texto transcrito que pode ser usado no fluxo existente de extração CRM.
