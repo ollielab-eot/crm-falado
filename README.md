@@ -80,3 +80,21 @@ Formatos aceitos no MVP:
 - mp4
 
 O endpoint `/api/transcribe` recebe `FormData` com o campo `audio` e limita o upload a 20 MB. O áudio não é gravado em disco, não é salvo no Turso e serve apenas para retornar o texto transcrito que pode ser usado no fluxo existente de extração CRM.
+
+## Gravação no navegador
+
+A tela `/new` também permite gravar uma nota de voz curta diretamente no navegador com as APIs nativas `navigator.mediaDevices.getUserMedia` e `MediaRecorder`. O usuário precisa conceder permissão de microfone quando o navegador solicitar; se a permissão for negada ou o navegador não suportar `MediaRecorder`, a interface mostra uma mensagem amigável e mantém as entradas por upload de áudio e texto manual funcionando.
+
+Depois de parar a gravação, o app gera um arquivo `webm` em memória para reprodução local e para envio ao fluxo existente de transcrição em `/api/transcribe`. O áudio gravado é enviado apenas para transcrição, não é armazenado no Turso, não é salvo em disco e ainda não usa Cloudflare R2.
+
+Fluxo local sugerido:
+
+```sh
+npm install
+npm run dev
+```
+
+1. Garanta `OPENAI_API_KEY` no `.env` para transcrição e extração por IA.
+2. Garanta `TURSO_DATABASE_URL` e `TURSO_AUTH_TOKEN` no `.env` para salvar no CRM.
+3. Acesse `/new`, clique em “Iniciar gravação”, permita o microfone, grave uma nota curta, clique em “Parar gravação” e depois em “Transcrever gravação”.
+4. Confirme que o textarea foi preenchido, clique em “Gerar preview do card” e então em “Salvar no CRM”.

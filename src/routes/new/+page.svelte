@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AudioRecorderPanel from '$lib/components/AudioRecorderPanel.svelte';
 	import AudioUploadPanel from '$lib/components/AudioUploadPanel.svelte';
 	import CardCRM from '$lib/components/CardCRM.svelte';
 	import { createApiCard } from '$lib/utils/cardsApi';
@@ -15,6 +16,7 @@
 	let isGeneratingPreview = $state(false);
 	let fallbackMessage = $state('');
 	let audioResetKey = $state(0);
+	let recorderResetKey = $state(0);
 
 	function createCardId() {
 		if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -123,6 +125,7 @@
 		isSavingToCrm = false;
 		isGeneratingPreview = false;
 		audioResetKey += 1;
+		recorderResetKey += 1;
 	}
 </script>
 
@@ -137,15 +140,25 @@
 			<a href="/">← Início</a>
 			<a href="/funnel">Ver funil</a>
 		</nav>
-		<p class="eyebrow">Sprint 9 · Novo card</p>
+		<p class="eyebrow">Sprint 10 · Novo card</p>
 		<h1 id="page-title">Cole uma conversa comercial e gere um preview de card.</h1>
 		<p class="intro">
-			O extrator usa IA no servidor e mantém fallback local quando a IA estiver indisponível. Agora você também pode transcrever áudio no servidor antes de gerar o card. Ao salvar, o card entra no CRM via Turso e aparece automaticamente no funil.
+			O extrator usa IA no servidor e mantém fallback local quando a IA estiver indisponível. Você pode gravar áudio no navegador, enviar um arquivo de áudio ou colar texto manualmente antes de gerar o card. Ao salvar, o card entra no CRM via Turso e aparece automaticamente no funil.
 		</p>
 	</section>
 
 	<section class="workspace" aria-label="Gerador de card">
 		<form class="input-panel" onsubmit={(event) => { event.preventDefault(); generatePreview(); }}>
+			<section class="input-overview" aria-label="Formas de entrada">
+				<p class="section-label">Três formas de entrada</p>
+				<ol>
+					<li>Gravar áudio</li>
+					<li>Enviar arquivo de áudio</li>
+					<li>Colar texto</li>
+				</ol>
+			</section>
+
+			<AudioRecorderPanel onTranscribed={handleAudioTranscribed} resetKey={recorderResetKey} />
 			<AudioUploadPanel onTranscribed={handleAudioTranscribed} resetKey={audioResetKey} />
 
 			<label for="conversation">Texto original</label>
@@ -267,6 +280,15 @@
 		color: #22325f;
 	}
 
+	.section-label {
+		margin: 0 0 0.25rem;
+		font-size: 0.78rem;
+		font-weight: 900;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: #4c63f2;
+	}
+
 	.eyebrow {
 		margin: 2rem 0 0.75rem;
 		font-size: 0.85rem;
@@ -313,6 +335,23 @@
 	.input-panel {
 		display: grid;
 		gap: 1rem;
+	}
+
+	.input-overview {
+		border: 1px solid rgba(74, 93, 142, 0.16);
+		border-radius: 1.25rem;
+		padding: 1rem;
+		background: rgba(255, 255, 255, 0.68);
+	}
+
+	.input-overview ol {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem 1.5rem;
+		margin: 0.5rem 0 0;
+		padding-left: 1.25rem;
+		color: #273858;
+		font-weight: 800;
 	}
 
 	label {

@@ -26,18 +26,24 @@ function getFileExtension(fileName: string) {
 	return fileName.slice(extensionStart).toLowerCase();
 }
 
+function getNormalizedMimeType(file: File) {
+	return file.type.split(';')[0].trim().toLowerCase();
+}
+
 function getDetectedFormatMessage(file: File) {
 	const detectedType = file.type || 'MIME vazio';
+	const normalizedType = getNormalizedMimeType(file) || 'MIME vazio';
 	const detectedExtension = getFileExtension(file.name) || 'sem extensão';
 
-	return `Formato detectado: ${detectedType}, extensão ${detectedExtension}. Tente mp3, wav, m4a, webm ou mp4.`;
+	return `Formato detectado: MIME original ${detectedType}, MIME normalizado ${normalizedType}, extensão ${detectedExtension}. Tente mp3, wav, m4a, webm ou mp4.`;
 }
 
 function isAcceptedAudioFile(file: File) {
 	const extension = getFileExtension(file.name);
-	const hasAcceptedType = ACCEPTED_AUDIO_TYPES.has(file.type);
+	const normalizedType = getNormalizedMimeType(file);
+	const hasAcceptedType = ACCEPTED_AUDIO_TYPES.has(normalizedType);
 	const hasAcceptedExtension = ACCEPTED_AUDIO_EXTENSIONS.has(extension);
-	const hasLooseType = !file.type || file.type === 'application/octet-stream';
+	const hasLooseType = !normalizedType || normalizedType === 'application/octet-stream';
 
 	return hasAcceptedType || (hasLooseType && hasAcceptedExtension);
 }
